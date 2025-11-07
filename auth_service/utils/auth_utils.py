@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Şifreleme ayarları
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Argon2 kullanıyoruz - modern, güvenli ve bcrypt'ten daha hızlı
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 # JWT ayarları
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production-please-use-strong-key")
@@ -74,9 +75,14 @@ def decode_token(token: str) -> dict:
         )
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = None):
-    """Mevcut kullanıcıyı token'dan alır"""
-    from database import get_db
+def get_current_user(db: Session, token: str = Depends(oauth2_scheme)):
+    """Mevcut kullanıcıyı token'dan alır
+    
+    Not: Bu fonksiyon router'da şu şekilde kullanılır:
+    current_user: User = Depends(lambda db=Depends(get_db), token=Depends(oauth2_scheme): get_current_user(db, token))
+    
+    Veya daha kolay olanı: Direkt router'da token'ı decode edip user'ı alın.
+    """
     from models import User
     from schemas import TokenData
     
@@ -98,10 +104,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = No
     except JWTError:
         raise credentials_exception
     
-    # Database bağlantısını al
-    if db is None:
-        db = next(get_db())
-    
     user = db.query(User).filter(User.id == token_data.user_id).first()
     
     if user is None:
@@ -114,26 +116,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = No
         )
     
     return user
-
-
-async def get_current_active_user(current_user = Depends(get_current_user)):
-    """Aktif kullanıcıyı döner"""
-    if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Aktif olmayan kullanıcı"
-        )
-    return current_user
-
-
-async def get_current_superuser(current_user = Depends(get_current_user)):
-    """Superuser kontrolü yapar"""
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Yetersiz yetki. Superuser erişimi gerekli."
-        )
-    return current_user
 
 
 def validate_password_strength(password: str) -> bool:
@@ -155,4 +137,3 @@ def validate_password_strength(password: str) -> bool:
         )
     
     return True
-

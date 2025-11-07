@@ -13,7 +13,7 @@ from schemas import (
 from utils.auth_utils import (
     get_password_hash, verify_password, 
     create_access_token, create_refresh_token,
-    decode_token, get_current_user, get_current_superuser,
+    decode_token, get_current_user, oauth2_scheme,
     validate_password_strength,
     ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 )
@@ -203,11 +203,12 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
 
 @router.post("/logout", response_model=MessageResponse)
 async def logout(
-    refresh_data: RefreshTokenRequest, 
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    refresh_data: RefreshTokenRequest,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """Kullanıcı çıkışı - refresh token'ı iptal et"""
+    current_user = get_current_user(db, token)
     
     # Refresh token'ı iptal et
     db_token = db.query(RefreshToken).filter(
@@ -224,18 +225,23 @@ async def logout(
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: User = Depends(get_current_user)):
+async def get_current_user_info(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
     """Mevcut kullanıcı bilgilerini getir"""
+    current_user = get_current_user(db, token)
     return current_user
 
 
 @router.put("/me", response_model=UserResponse)
 async def update_current_user(
     user_update: UserUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """Kullanıcı bilgilerini güncelle"""
+    current_user = get_current_user(db, token)
     
     # Email güncellemesi varsa, benzersiz mi kontrol et
     if user_update.email and user_update.email != current_user.email:
@@ -276,10 +282,11 @@ async def update_current_user(
 @router.post("/change-password", response_model=MessageResponse)
 async def change_password(
     password_data: PasswordReset,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """Şifre değiştir"""
+    current_user = get_current_user(db, token)
     
     # Eski şifreyi doğrula
     if not verify_password(password_data.old_password, current_user.hashed_password):
@@ -301,10 +308,11 @@ async def change_password(
 
 @router.delete("/me", response_model=MessageResponse)
 async def delete_account(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """Hesabı sil (soft delete - is_active = False)"""
+    current_user = get_current_user(db, token)
     
     current_user.is_active = False
     current_user.updated_at = datetime.utcnow()
@@ -329,10 +337,19 @@ async def delete_account(
 async def list_users(
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_superuser),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """Tüm kullanıcıları listele (Sadece admin)"""
+    current_user = get_current_user(db, token)
+    
+    # Superuser kontrolü
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Yetersiz yetki. Superuser erişimi gerekli."
+        )
+    
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
@@ -340,10 +357,19 @@ async def list_users(
 @router.get("/users/{user_id}", response_model=UserInDB)
 async def get_user(
     user_id: int,
-    current_user: User = Depends(get_current_superuser),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """Belirli bir kullanıcıyı getir (Sadece admin)"""
+    current_user = get_current_user(db, token)
+    
+    # Superuser kontrolü
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Yetersiz yetki. Superuser erişimi gerekli."
+        )
+    
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(

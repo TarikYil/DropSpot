@@ -11,7 +11,8 @@ build: ## Docker imajlarını oluşturur
 up: ## Servisleri başlatır
 	docker-compose up -d
 	@echo "✅ Servisler başlatıldı!"
-	@echo "📚 API Dokümantasyonu: http://localhost:8000/docs"
+	@echo "🔐 Auth Service API: http://localhost:8001/docs"
+	@echo "🎯 Backend Service API: http://localhost:8002/docs"
 	@echo "🗄️  pgAdmin: http://localhost:5050 (admin@dropspot.com / admin)"
 
 down: ## Servisleri durdurur
@@ -28,6 +29,9 @@ logs: ## Tüm servislerin loglarını gösterir
 logs-auth: ## Auth servisinin loglarını gösterir
 	docker-compose logs -f auth_service
 
+logs-backend: ## Backend servisinin loglarını gösterir
+	docker-compose logs -f backend
+
 logs-db: ## PostgreSQL loglarını gösterir
 	docker-compose logs -f postgres
 
@@ -41,8 +45,14 @@ clean: ## Servisleri durdurur ve volume'leri siler (DİKKAT: Tüm veriler silini
 shell-auth: ## Auth servisine shell açar
 	docker-compose exec auth_service /bin/bash
 
+shell-backend: ## Backend servisine shell açar
+	docker-compose exec backend /bin/bash
+
 shell-db: ## PostgreSQL'e bağlanır
 	docker-compose exec postgres psql -U postgres -d auth_db
+
+shell-db-backend: ## Backend database'ine bağlanır
+	docker-compose exec postgres psql -U postgres -d dropspot_db
 
 migrate: ## Database migration çalıştırır (gelecekte eklenecek)
 	@echo "⚠️  Migration sistemi henüz eklenmedi (Alembic)"
@@ -61,5 +71,7 @@ init: ## İlk kurulum (environment dosyası oluşturur ve servisleri başlatır)
 	@make up
 	@echo ""
 	@echo "🎉 Kurulum tamamlandı!"
-	@echo "📚 API Dokümantasyonu: http://localhost:8000/docs"
+	@echo "🔐 Auth Service API: http://localhost:8001/docs"
+	@echo "🎯 Backend Service API: http://localhost:8002/docs"
+	@echo "🗄️  pgAdmin: http://localhost:5050"
 

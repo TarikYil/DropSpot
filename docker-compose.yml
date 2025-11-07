@@ -38,7 +38,7 @@ services:
       PORT: 8000
       ENVIRONMENT: development
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,6 +49,40 @@ services:
       - dropspot_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dropspot_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/dropspot_db
+      SECRET_KEY: ${SECRET_KEY:-dropspot-super-secret-key-change-in-production-2024}
+      AUTH_SERVICE_URL: http://auth_service:8000
+      PORT: 8002
+      ENVIRONMENT: development
+      GITHUB_REPO_URL: ${GITHUB_REPO_URL:-https://github.com/dropspot/platform}
+      FIRST_COMMIT_EPOCH: ${FIRST_COMMIT_EPOCH:-1699000000}
+      PROJECT_START_TIME: ${PROJECT_START_TIME:-202411071200}
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+    networks:
+      - dropspot_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
       timeout: 10s
       retries: 3
