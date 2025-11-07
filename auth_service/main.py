@@ -46,7 +46,8 @@ async def health_check(db: Session = Depends(get_db)):
     """Sağlık kontrolü endpoint'i - veritabanı bağlantısını da kontrol eder"""
     try:
         # Veritabanı bağlantısını test et
-        db.execute("SELECT 1")
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
         return {
             "status": "healthy",
             "database": "connected"
