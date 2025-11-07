@@ -96,10 +96,10 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     
     # Token'ları oluştur
     access_token = create_access_token(
-        data={"sub": user.id, "username": user.username}
+        data={"sub": str(user.id), "username": user.username, "is_superuser": user.is_superuser}
     )
     refresh_token_str = create_refresh_token(
-        data={"sub": user.id}
+        data={"sub": str(user.id)}
     )
     
     # Refresh token'ı veritabanına kaydet
@@ -167,10 +167,10 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
         
         # Yeni token'ları oluştur
         new_access_token = create_access_token(
-            data={"sub": user.id, "username": user.username}
+            data={"sub": str(user.id), "username": user.username, "is_superuser": user.is_superuser}
         )
         new_refresh_token = create_refresh_token(
-            data={"sub": user.id}
+            data={"sub": str(user.id)}
         )
         
         # Eski refresh token'ı iptal et

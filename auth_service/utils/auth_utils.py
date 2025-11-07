@@ -67,21 +67,38 @@ def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token süresi dolmuş",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.JWTClaimsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token claims hatası: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token geçersiz veya süresi dolmuş",
+            detail=f"Token decode hatası: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
 
-def get_current_user(db: Session, token: str = Depends(oauth2_scheme)):
+def get_current_user(db: Session, token: str):
     """Mevcut kullanıcıyı token'dan alır
     
-    Not: Bu fonksiyon router'da şu şekilde kullanılır:
-    current_user: User = Depends(lambda db=Depends(get_db), token=Depends(oauth2_scheme): get_current_user(db, token))
-    
-    Veya daha kolay olanı: Direkt router'da token'ı decode edip user'ı alın.
+    Args:
+        db: Database session
+        token: JWT token string
+        
+    Returns:
+        User: Authenticated user object
+        
+    Raises:
+        HTTPException: If token is invalid or user not found
     """
     from models import User
     from schemas import TokenData
@@ -92,17 +109,20 @@ def get_current_user(db: Session, token: str = Depends(oauth2_scheme)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    try:
-        payload = decode_token(token)
-        user_id: int = payload.get("sub")
-        token_type: str = payload.get("type")
-        
-        if user_id is None or token_type != "access":
-            raise credentials_exception
-            
-        token_data = TokenData(user_id=user_id)
-    except JWTError:
+    # Token'ı decode et (decode_token zaten HTTPException fırlatıyor)
+    payload = decode_token(token)
+    user_id_str: str = payload.get("sub")
+    token_type: str = payload.get("type")
+    
+    if user_id_str is None or token_type != "access":
         raise credentials_exception
+    
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
+        raise credentials_exception
+        
+    token_data = TokenData(user_id=user_id)
     
     user = db.query(User).filter(User.id == token_data.user_id).first()
     
