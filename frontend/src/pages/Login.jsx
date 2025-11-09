@@ -28,13 +28,13 @@ export default function Login({ setUser }) {
       // Token'ı localStorage'a kaydet
       setToken(response.data.access_token);
       
-      // Get user info
-      const userResponse = await authService.me();
-      console.log('User info:', userResponse.data);
+      // User bilgisi response'da varsa kullan, yoksa me() çağrısı yap
+      const userData = response.data.user || (await authService.me()).data;
+      console.log('User info:', userData);
       
       // Hem App.jsx state'ini hem de localStorage'ı güncelle
-      setUser(userResponse.data);
-      setUserLocalStorage(userResponse.data);
+      setUser(userData);
+      setUserLocalStorage(userData);
       
       navigate('/');
     } catch (err) {
