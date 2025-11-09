@@ -88,6 +88,69 @@ services:
       retries: 3
       start_period: 40s
 
+  # AI Service - Gemini-based RAG Chatbot
+  ai_service:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile
+    container_name: dropspot_ai_service
+    environment:
+      PORT: 8004
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyCjy1PrC-Sqbs5ELXnQpH94Z3i3WU_Yppg}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      AUTH_SERVICE_URL: http://auth_service:8000
+      BACKEND_SERVICE_URL: http://backend:8002
+      SECRET_KEY: ${SECRET_KEY:-dropspot-super-secret-key-change-in-production-2024}
+      MAX_CONTEXT_LENGTH: 4000
+      MAX_CHAT_HISTORY: 10
+      TEMPERATURE: 0.7
+      TOP_P: 0.95
+      TOP_K: 40
+    ports:
+      - "8004:8004"
+    depends_on:
+      backend:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+    volumes:
+      - ./ai_service:/app
+    restart: unless-stopped
+    networks:
+      - dropspot_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service - React UI
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dropspot_frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8002
+      VITE_AUTH_API_BASE_URL: http://localhost:8001
+      VITE_AI_API_BASE_URL: http://localhost:8004
+    ports:
+      - "3000:3000"
+    depends_on:
+      auth_service:
+        condition: service_started
+      backend:
+        condition: service_started
+      ai_service:
+        condition: service_started
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - dropspot_network
+
   # pgAdmin - PostgreSQL Yönetim Arayüzü (Opsiyonel)
   pgadmin:
     image: dpage/pgadmin4:latest
