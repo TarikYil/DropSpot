@@ -233,6 +233,65 @@ docker-compose exec backend alembic upgrade head
 docker-compose exec auth_service python scripts/create_default_admin.py
 ```
 
+### AI Service Kurulumu
+
+AI Service için Gemini API key'i gereklidir. `.env` dosyası oluşturmanız gerekir:
+
+1. `ai_service` klasörüne gidin:
+```bash
+cd ai_service
+```
+
+2. `.env.example` dosyasını `.env` olarak kopyalayın:
+```bash
+cp .env.example .env
+```
+
+3. `.env` dosyasını düzenleyin ve Gemini API key'inizi ekleyin:
+```bash
+# .env dosyasını bir metin editörü ile açın
+# Windows: notepad .env
+# Linux/Mac: nano .env veya vim .env
+```
+
+4. `.env` dosyası içeriği:
+```env
+# Gemini API Key (Zorunlu)
+# Google AI Studio'dan ücretsiz alabilirsiniz: https://aistudio.google.com/app/apikey
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# Gemini Model (Opsiyonel - varsayılan: gemini-2.5-flash)
+GEMINI_MODEL=gemini-2.5-flash
+
+# Server Port (Opsiyonel - varsayılan: 8004)
+PORT=8004
+
+# Environment (Opsiyonel - varsayılan: development)
+ENVIRONMENT=development
+
+# Service URLs (Docker içinde otomatik ayarlanır)
+AUTH_SERVICE_URL=http://auth_service:8000
+BACKEND_SERVICE_URL=http://backend:8002
+
+# RAG Settings (Opsiyonel)
+MAX_CONTEXT_LENGTH=4000
+MAX_CHAT_HISTORY=10
+TEMPERATURE=0.7
+TOP_P=0.95
+TOP_K=40
+
+# Security (Opsiyonel)
+SECRET_KEY=dropspot-ai-secret-key-2024
+```
+
+5. Gemini API Key alma:
+   - [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
+   - Google hesabınızla giriş yapın
+   - "Create API Key" butonuna tıklayın
+   - Oluşturulan API key'i kopyalayın ve `.env` dosyasındaki `GEMINI_API_KEY` değerine yapıştırın
+
+**Not:** `.env` dosyası Git'e commit edilmez (`.gitignore`'da tanımlıdır). Her geliştirici kendi API key'ini oluşturmalıdır.
+
 ### Frontend Kurulumu
 
 Frontend Docker ile otomatik olarak başlatılır. Manuel kurulum için:
