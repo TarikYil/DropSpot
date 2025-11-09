@@ -38,6 +38,7 @@ class UserResponse(UserBase):
     
     id: int
     is_active: bool
+    is_superuser: bool = False
     is_verified: bool
     created_at: datetime
 
@@ -47,6 +48,7 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    user: Optional[UserResponse] = None
 
 
 class TokenData(BaseModel):

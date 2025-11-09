@@ -117,11 +117,13 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     # Son giriş zamanını güncelle
     user.last_login = datetime.utcnow()
     db.commit()
+    db.refresh(user)
     
     return {
         "access_token": access_token,
         "refresh_token": refresh_token_str,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": user
     }
 
 
