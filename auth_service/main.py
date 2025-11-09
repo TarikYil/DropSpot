@@ -1,13 +1,147 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from contextlib import asynccontextmanager
 import uvicorn
-from database import engine, Base, get_db
-from routers import auth
+from database import engine, Base, get_db, SessionLocal
+from routers import auth, roles
+from models import User, Role
+from utils.auth_utils import get_password_hash
 import os
 
 # Veritabanı tablolarını oluştur
 Base.metadata.create_all(bind=engine)
+
+
+def create_default_roles_if_not_exists():
+    """Default rolleri oluştur (yoksa)"""
+    db = SessionLocal()
+    try:
+        default_roles = [
+            {
+                "name": "admin",
+                "display_name": "Admin",
+                "description": "Tam yetki - tüm işlemleri yapabilir",
+                "can_create_drops": True,
+                "can_edit_drops": True,
+                "can_delete_drops": True,
+                "can_approve_claims": True,
+                "can_manage_users": True,
+                "can_view_analytics": True
+            },
+            {
+                "name": "moderator",
+                "display_name": "Moderatör",
+                "description": "Drop yönetimi ve claim onaylama yetkisi",
+                "can_create_drops": True,
+                "can_edit_drops": True,
+                "can_delete_drops": False,
+                "can_approve_claims": True,
+                "can_manage_users": False,
+                "can_view_analytics": True
+            },
+            {
+                "name": "creator",
+                "display_name": "İçerik Üreticisi",
+                "description": "Sadece drop oluşturabilir",
+                "can_create_drops": True,
+                "can_edit_drops": True,
+                "can_delete_drops": False,
+                "can_approve_claims": False,
+                "can_manage_users": False,
+                "can_view_analytics": False
+            },
+            {
+                "name": "user",
+                "display_name": "Kullanıcı",
+                "description": "Normal kullanıcı - drop'lara katılabilir",
+                "can_create_drops": False,
+                "can_edit_drops": False,
+                "can_delete_drops": False,
+                "can_approve_claims": False,
+                "can_manage_users": False,
+                "can_view_analytics": False
+            }
+        ]
+        
+        for role_data in default_roles:
+            existing_role = db.query(Role).filter(Role.name == role_data["name"]).first()
+            if not existing_role:
+                new_role = Role(**role_data)
+                db.add(new_role)
+                print(f"✅ Default rol oluşturuldu: {role_data['display_name']} ({role_data['name']})")
+            else:
+                # Mevcut rolü güncelle (yetkileri güncelle)
+                for key, value in role_data.items():
+                    if key != "name":  # name değiştirilmez
+                        setattr(existing_role, key, value)
+                print(f"✅ Default rol güncellendi: {role_data['display_name']} ({role_data['name']})")
+        
+        db.commit()
+    except Exception as e:
+        print(f"❌ Default rolleri oluşturulurken hata: {str(e)}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def create_default_admin_if_not_exists():
+    """Default admin kullanıcısını oluştur (yoksa) - Her zaman super admin olarak ayarlanır"""
+    db = SessionLocal()
+    try:
+        username = os.getenv("ADMIN_USERNAME", "admin")
+        email = os.getenv("ADMIN_EMAIL", "admin@example.com")
+        password = os.getenv("ADMIN_PASSWORD", "admin123")
+        full_name = os.getenv("ADMIN_FULL_NAME", "Default Admin")
+        
+        # Kullanıcı zaten var mı kontrol et
+        existing_user = db.query(User).filter(
+            (User.username == username) | (User.email == email)
+        ).first()
+        
+        if existing_user:
+            # Kullanıcı varsa, MUTLAKA superuser yap ve bilgileri güncelle
+            existing_user.is_superuser = True  # Her zaman super admin
+            existing_user.is_active = True
+            existing_user.is_verified = True
+            existing_user.hashed_password = get_password_hash(password)
+            if existing_user.full_name != full_name:
+                existing_user.full_name = full_name
+            db.commit()
+            print(f"✅ Default admin kullanıcısı güncellendi ve super admin yapıldı: {username}")
+        else:
+            # Yeni kullanıcı oluştur - MUTLAKA super admin olarak
+            hashed_password = get_password_hash(password)
+            new_user = User(
+                username=username,
+                email=email,
+                hashed_password=hashed_password,
+                full_name=full_name,
+                is_active=True,
+                is_superuser=True,  # Default olarak super admin
+                is_verified=True
+            )
+            db.add(new_user)
+            db.commit()
+            print(f"✅ Default admin kullanıcısı oluşturuldu (super admin): {username}")
+    except Exception as e:
+        print(f"❌ Default admin oluşturulurken hata: {str(e)}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup ve shutdown event'leri"""
+    # Startup
+    print("🚀 Auth Service başlatılıyor...")
+    create_default_roles_if_not_exists()
+    create_default_admin_if_not_exists()
+    yield
+    # Shutdown
+    print("🛑 Auth Service kapatılıyor...")
+
 
 # FastAPI uygulamasını oluştur
 app = FastAPI(
@@ -15,7 +149,8 @@ app = FastAPI(
     description="Modern ve güvenli kimlik doğrulama servisi",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS ayarları
@@ -29,6 +164,7 @@ app.add_middleware(
 
 # Router'ları dahil et
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(roles.router, prefix="/api/roles", tags=["Roles"])
 
 
 @app.get("/")

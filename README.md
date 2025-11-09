@@ -233,6 +233,65 @@ docker-compose exec backend alembic upgrade head
 docker-compose exec auth_service python scripts/create_default_admin.py
 ```
 
+### AI Service Kurulumu
+
+AI Service için Gemini API key'i gereklidir. `.env` dosyası oluşturmanız gerekir:
+
+1. `ai_service` klasörüne gidin:
+```bash
+cd ai_service
+```
+
+2. `.env.example` dosyasını `.env` olarak kopyalayın:
+```bash
+cp .env.example .env
+```
+
+3. `.env` dosyasını düzenleyin ve Gemini API key'inizi ekleyin:
+```bash
+# .env dosyasını bir metin editörü ile açın
+# Windows: notepad .env
+# Linux/Mac: nano .env veya vim .env
+```
+
+4. `.env` dosyası içeriği:
+```env
+# Gemini API Key (Zorunlu)
+# Google AI Studio'dan ücretsiz alabilirsiniz: https://aistudio.google.com/app/apikey
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# Gemini Model (Opsiyonel - varsayılan: gemini-2.5-flash)
+GEMINI_MODEL=gemini-2.5-flash
+
+# Server Port (Opsiyonel - varsayılan: 8004)
+PORT=8004
+
+# Environment (Opsiyonel - varsayılan: development)
+ENVIRONMENT=development
+
+# Service URLs (Docker içinde otomatik ayarlanır)
+AUTH_SERVICE_URL=http://auth_service:8000
+BACKEND_SERVICE_URL=http://backend:8002
+
+# RAG Settings (Opsiyonel)
+MAX_CONTEXT_LENGTH=4000
+MAX_CHAT_HISTORY=10
+TEMPERATURE=0.7
+TOP_P=0.95
+TOP_K=40
+
+# Security (Opsiyonel)
+SECRET_KEY=dropspot-ai-secret-key-2024
+```
+
+5. Gemini API Key alma:
+   - [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
+   - Google hesabınızla giriş yapın
+   - "Create API Key" butonuna tıklayın
+   - Oluşturulan API key'i kopyalayın ve `.env` dosyasındaki `GEMINI_API_KEY` değerine yapıştırın
+
+**Not:** `.env` dosyası Git'e commit edilmez (`.gitignore`'da tanımlıdır). Her geliştirici kendi API key'ini oluşturmalıdır.
+
 ### Frontend Kurulumu
 
 Frontend Docker ile otomatik olarak başlatılır. Manuel kurulum için:
@@ -260,6 +319,7 @@ Frontend `http://localhost:3000` adresinde çalışır.
 - AI Service Swagger: http://localhost:8004/docs
 
 ## 6. Ekran Görüntüleri
+<img width="1916" height="910" alt="image" src="https://github.com/user-attachments/assets/7c98ceeb-7d49-400c-ba49-3bc15e73fd44" />
 
 ### Ana Sayfa (Drop Listesi)
 Ana sayfada tüm aktif drop'lar listelenir. Kullanıcılar drop'lara göz atabilir, arama yapabilir ve bekleme listesine katılabilir. Her drop kartında ürün görseli, başlık, açıklama, stok bilgisi ve konum bilgisi görüntülenir.
@@ -271,6 +331,8 @@ Ana sayfada tüm aktif drop'lar listelenir. Kullanıcılar drop'lara göz atabil
 - Responsive tasarım (mobil uyumlu)
 
 ### Drop Detay Sayfası
+<img width="1918" height="908" alt="Ekran görüntüsü 2025-11-09 175049" src="https://github.com/user-attachments/assets/0d40537c-c2c9-45e1-8bfa-31a9a0ebad49" />
+
 Kullanıcılar drop detay sayfasında ürün hakkında detaylı bilgi görüntüleyebilir. Sayfada ürün görseli, açıklama, stok durumu, bekleme listesi sayısı, konum bilgisi ve zaman bilgisi yer alır.
 
 **Özellikler:**
@@ -292,6 +354,8 @@ Kullanıcılar drop detay sayfasında ürün hakkında detaylı bilgi görüntü
   - Zaman: Başlangıç ve bitiş tarihleri
 
 ### Bekleme Listem Sayfası
+<img width="1914" height="910" alt="Ekran görüntüsü 2025-11-09 174853" src="https://github.com/user-attachments/assets/98421f53-db1c-4512-b95f-67f58ef0af08" />
+
 Kullanıcılar bu sayfada bekleme listesine ekledikleri drop'ları görüntüleyebilir. Her drop için sıra numarası, ürün görseli, başlık, stok durumu, konum ve tarih bilgisi gösterilir.
 
 **Özellikler:**
@@ -314,6 +378,8 @@ Kullanıcılar bu sayfada bekleme listesine ekledikleri drop'ları görüntüley
   - Çıkış (X) butonu
 
 ### Claim'lerim Sayfası
+<img width="1914" height="910" alt="Ekran görüntüsü 2025-11-09 174853" src="https://github.com/user-attachments/assets/980ed5c9-fb7e-47c0-a16a-4e2bcf0f9b23" />
+
 Kullanıcılar bu sayfada yaptıkları claim'leri görüntüleyebilir. Her claim için durum (Onaylandı/Reddedildi/Beklemede), ürün görseli, başlık, verification code ve tarih bilgisi gösterilir.
 
 **Özellikler:**
@@ -340,6 +406,8 @@ Kullanıcılar bu sayfada yaptıkları claim'leri görüntüleyebilir. Her claim
 - Beklemede: Sarı badge (varsayılan)
 
 ### Admin Paneli - Drop'lar Sekmesi
+<img width="1916" height="907" alt="Ekran görüntüsü 2025-11-09 174828" src="https://github.com/user-attachments/assets/9d76f187-bd92-47a7-9303-df7cae828869" />
+
 Admin kullanıcıları bu sayfada drop'ları yönetebilir. İstatistik kartları, drop listesi tablosu ve yeni drop oluşturma butonu bulunur.
 
 **Özellikler:**
@@ -368,6 +436,8 @@ Admin kullanıcıları bu sayfada drop'ları yönetebilir. İstatistik kartları
   - "Exclusive Hoodie Drop #2" - Stok: 48/64 - Durum: active (yeşil) - Düzenle/Sil
 
 ### Admin Paneli - Claim'ler Sekmesi
+![Uploading Ekran görüntüsü 2025-11-09 174853.png…]()
+
 Admin kullanıcıları bu sayfada tüm claim'leri görüntüleyebilir ve yönetebilir. Claim'ler durumlarına göre filtrelenebilir.
 
 **Özellikler:**
@@ -390,7 +460,10 @@ Admin kullanıcıları bu sayfada tüm claim'leri görüntüleyebilir ve yönete
   - #12, #4, #10, 1, Onaylandı (yeşil badge), 07.11.2025
 
 ### Süper Admin Paneli
+<img width="1914" height="907" alt="image" src="https://github.com/user-attachments/assets/e3fb179f-0b67-48d5-8b49-1cb9f56980be" />
+
 Süper admin kullanıcıları bu sayfada kullanıcıları ve rollerini yönetebilir. Kullanıcı listesi, rol atama ve yetki yönetimi özellikleri bulunur.
+<img width="1913" height="907" alt="image" src="https://github.com/user-attachments/assets/939eb697-7984-4216-9c1e-c8055ae43c94" />
 
 **Özellikler:**
 - Kullanıcı listesi tablosu
@@ -407,13 +480,25 @@ Kullanıcılar bu sayfada profil bilgilerini görüntüleyebilir ve güncelleyeb
 - Hesap ayarları
 
 ### AI Chatbot Widget
-Sağ alt köşede bulunan chatbot widget'ı ile kullanıcılar platform hakkında sorular sorabilir.
+
+Sağ alt köşede bulunan chatbot widget'ı ile kullanıcılar platform hakkında sorular sorabilir. Google Gemini Pro tabanlı RAG (Retrieval Augmented Generation) sistemi kullanılarak geliştirilmiştir.
 
 **Özellikler:**
 - Sağ alt köşede sabit konum
 - Mor renkli chat bubble ikonu
 - Tıklanınca açılan chat penceresi
 - Platform bilgileri hakkında AI destekli yanıtlar
+- Gerçek zamanlı veri çekme (aktif drop'lar, waitlist durumu vb.)
+- Kullanıcıya özel bilgiler (token ile kimlik doğrulama)
+- Chat geçmişi ile bağlamsal sohbet
+
+**Kullanım:**
+Kullanıcılar chatbot'a "Aktif drop'lar neler?", "Waitlist'imde kaç drop var?" gibi sorular sorabilir. AI, backend servisinden gerçek zamanlı veri çekerek doğru ve güncel yanıtlar verir.
+
+**Örnek Görüntü:**
+- Sağ alt köşede mor renkli chat bubble ikonu
+- Açık chat penceresi ile kullanıcı-AI sohbeti
+- Mesaj geçmişi ve yanıtlar
 
 ## 7. Teknik Tercihler ve Kişisel Katkılar
 
