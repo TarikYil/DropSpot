@@ -1,2 +1,0 @@
-# Auth Service modülü
-
