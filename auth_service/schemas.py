@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 
 # User Schemas
@@ -40,7 +40,8 @@ class UserResponse(UserBase):
     is_active: bool
     is_superuser: bool = False
     is_verified: bool
-    created_at: datetime
+    created_at: Optional[str] = None  # ISO format string olarak
+    roles: Optional[List[dict]] = []
 
 
 # Auth Schemas

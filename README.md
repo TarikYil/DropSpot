@@ -480,13 +480,25 @@ Kullanıcılar bu sayfada profil bilgilerini görüntüleyebilir ve güncelleyeb
 - Hesap ayarları
 
 ### AI Chatbot Widget
-Sağ alt köşede bulunan chatbot widget'ı ile kullanıcılar platform hakkında sorular sorabilir.
+
+Sağ alt köşede bulunan chatbot widget'ı ile kullanıcılar platform hakkında sorular sorabilir. Google Gemini Pro tabanlı RAG (Retrieval Augmented Generation) sistemi kullanılarak geliştirilmiştir.
 
 **Özellikler:**
 - Sağ alt köşede sabit konum
 - Mor renkli chat bubble ikonu
 - Tıklanınca açılan chat penceresi
 - Platform bilgileri hakkında AI destekli yanıtlar
+- Gerçek zamanlı veri çekme (aktif drop'lar, waitlist durumu vb.)
+- Kullanıcıya özel bilgiler (token ile kimlik doğrulama)
+- Chat geçmişi ile bağlamsal sohbet
+
+**Kullanım:**
+Kullanıcılar chatbot'a "Aktif drop'lar neler?", "Waitlist'imde kaç drop var?" gibi sorular sorabilir. AI, backend servisinden gerçek zamanlı veri çekerek doğru ve güncel yanıtlar verir.
+
+**Örnek Görüntü:**
+- Sağ alt köşede mor renkli chat bubble ikonu
+- Açık chat penceresi ile kullanıcı-AI sohbeti
+- Mesaj geçmişi ve yanıtlar
 
 ## 7. Teknik Tercihler ve Kişisel Katkılar
 

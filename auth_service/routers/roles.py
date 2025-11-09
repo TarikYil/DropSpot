@@ -53,7 +53,24 @@ async def list_roles(
         )
     
     roles = db.query(Role).all()
-    return roles
+    # RoleResponse şeması için serialize et
+    result = []
+    for role in roles:
+        role_dict = {
+            "id": role.id,
+            "name": role.name,
+            "display_name": role.display_name,
+            "description": role.description,
+            "can_create_drops": role.can_create_drops,
+            "can_edit_drops": role.can_edit_drops,
+            "can_delete_drops": role.can_delete_drops,
+            "can_approve_claims": role.can_approve_claims,
+            "can_manage_users": role.can_manage_users,
+            "can_view_analytics": role.can_view_analytics,
+            "created_at": role.created_at.isoformat() if role.created_at else None
+        }
+        result.append(role_dict)
+    return result
 
 
 @router.post("/", response_model=RoleResponse)
@@ -83,7 +100,20 @@ async def create_role(
     db.commit()
     db.refresh(new_role)
     
-    return new_role
+    # RoleResponse şeması için serialize et
+    return {
+        "id": new_role.id,
+        "name": new_role.name,
+        "display_name": new_role.display_name,
+        "description": new_role.description,
+        "can_create_drops": new_role.can_create_drops,
+        "can_edit_drops": new_role.can_edit_drops,
+        "can_delete_drops": new_role.can_delete_drops,
+        "can_approve_claims": new_role.can_approve_claims,
+        "can_manage_users": new_role.can_manage_users,
+        "can_view_analytics": new_role.can_view_analytics,
+        "created_at": new_role.created_at.isoformat() if new_role.created_at else None
+    }
 
 
 @router.get("/{role_id}", response_model=RoleResponse)
@@ -107,7 +137,20 @@ async def get_role(
             detail="Rol bulunamadı"
         )
     
-    return role
+    # RoleResponse şeması için serialize et
+    return {
+        "id": role.id,
+        "name": role.name,
+        "display_name": role.display_name,
+        "description": role.description,
+        "can_create_drops": role.can_create_drops,
+        "can_edit_drops": role.can_edit_drops,
+        "can_delete_drops": role.can_delete_drops,
+        "can_approve_claims": role.can_approve_claims,
+        "can_manage_users": role.can_manage_users,
+        "can_view_analytics": role.can_view_analytics,
+        "created_at": role.created_at.isoformat() if role.created_at else None
+    }
 
 
 @router.delete("/{role_id}")
@@ -245,5 +288,22 @@ async def get_user_roles(
             detail="Kullanıcı bulunamadı"
         )
     
-    return user.roles
+    # Rolleri serialize et
+    result = []
+    for role in user.roles:
+        role_dict = {
+            "id": role.id,
+            "name": role.name,
+            "display_name": role.display_name,
+            "description": role.description,
+            "can_create_drops": role.can_create_drops,
+            "can_edit_drops": role.can_edit_drops,
+            "can_delete_drops": role.can_delete_drops,
+            "can_approve_claims": role.can_approve_claims,
+            "can_manage_users": role.can_manage_users,
+            "can_view_analytics": role.can_view_analytics,
+            "created_at": role.created_at.isoformat() if role.created_at else None
+        }
+        result.append(role_dict)
+    return result
 

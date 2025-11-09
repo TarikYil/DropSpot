@@ -94,10 +94,16 @@ def get_current_user(db: Session, token: str = Depends(oauth2_scheme)):
     
     try:
         payload = decode_token(token)
-        user_id: int = payload.get("sub")
+        user_id_str = payload.get("sub")
         token_type: str = payload.get("type")
         
-        if user_id is None or token_type != "access":
+        if user_id_str is None or token_type != "access":
+            raise credentials_exception
+        
+        # sub string olarak geldiği için integer'a çevir
+        try:
+            user_id = int(user_id_str)
+        except (ValueError, TypeError):
             raise credentials_exception
             
         token_data = TokenData(user_id=user_id)

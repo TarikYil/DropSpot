@@ -10,7 +10,7 @@ import httpx
 import os
 
 from database import get_db
-from utils.security import require_admin
+from utils.security import require_admin, oauth2_scheme
 from schemas import (
     MessageResponse,
     UserListResponse,
@@ -29,7 +29,8 @@ async def list_all_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     is_active: Optional[bool] = None,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Tüm kullanıcıları listele (Sadece süper admin)
@@ -45,8 +46,8 @@ async def list_all_users(
             params["is_active"] = is_active
             
         async with httpx.AsyncClient() as client:
-            # Admin token'ını kullan (burada current_user'dan alıyoruz)
-            headers = {"Authorization": f"Bearer {current_user.get('token')}"}
+            # Admin token'ını kullan
+            headers = {"Authorization": f"Bearer {token}"}
             response = await client.get(
                 f"{AUTH_SERVICE_URL}/api/auth/users",
                 params=params,
@@ -55,6 +56,21 @@ async def list_all_users(
             )
             response.raise_for_status()
             users = response.json()
+            
+            # Her kullanıcı için rolleri al
+            for user in users:
+                try:
+                    roles_response = await client.get(
+                        f"{AUTH_SERVICE_URL}/api/roles/user/{user['id']}",
+                        headers=headers,
+                        timeout=10.0
+                    )
+                    if roles_response.status_code == 200:
+                        user['roles'] = roles_response.json() if isinstance(roles_response.json(), list) else []
+                    else:
+                        user['roles'] = []
+                except:
+                    user['roles'] = []
             
         return users
         
@@ -68,7 +84,8 @@ async def list_all_users(
 @router.get("/users/{user_id}", response_model=UserDetailResponse)
 async def get_user_detail(
     user_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Belirli bir kullanıcının detaylı bilgilerini getir (Sadece süper admin)
@@ -76,7 +93,7 @@ async def get_user_detail(
     """
     try:
         async with httpx.AsyncClient() as client:
-            headers = {"Authorization": f"Bearer {current_user.get('token')}"}
+            headers = {"Authorization": f"Bearer {token}"}
             
             # Kullanıcı bilgileri
             user_response = await client.get(
@@ -88,19 +105,17 @@ async def get_user_detail(
             user_data = user_response.json()
             
             # Kullanıcının rolleri ve yetkileri
-            roles_response = await client.get(
-                f"{AUTH_SERVICE_URL}/api/roles/user/{user_id}",
-                headers=headers,
-                timeout=10.0
-            )
-            roles_response.raise_for_status()
-            roles_data = roles_response.json()
-            
-            # Birleştir
-            user_data.update({
-                "roles": roles_data.get("roles", []),
-                "permissions": roles_data.get("permissions", [])
-            })
+            try:
+                roles_response = await client.get(
+                    f"{AUTH_SERVICE_URL}/api/roles/user/{user_id}",
+                    headers=headers,
+                    timeout=10.0
+                )
+                roles_response.raise_for_status()
+                roles_data = roles_response.json()
+                user_data["roles"] = roles_data if isinstance(roles_data, list) else []
+            except:
+                user_data["roles"] = []
             
         return user_data
         
@@ -120,7 +135,8 @@ async def get_user_detail(
 async def delete_user(
     user_id: int,
     permanent: bool = Query(False, description="Kalıcı olarak sil (True) veya sadece deaktif et (False)"),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Kullanıcıyı sil veya deaktif et (Sadece süper admin)
@@ -137,7 +153,7 @@ async def delete_user(
             )
         
         async with httpx.AsyncClient() as client:
-            headers = {"Authorization": f"Bearer {current_user.get('token')}"}
+            headers = {"Authorization": f"Bearer {token}"}
             
             if permanent:
                 # Kalıcı silme - auth servisinde endpoint varsa
@@ -177,14 +193,15 @@ async def delete_user(
 
 @router.get("/roles", response_model=List[RoleListResponse])
 async def list_all_roles(
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Tüm rolleri listele (Sadece süper admin)
     """
     try:
         async with httpx.AsyncClient() as client:
-            headers = {"Authorization": f"Bearer {current_user.get('token')}"}
+            headers = {"Authorization": f"Bearer {token}"}
             response = await client.get(
                 f"{AUTH_SERVICE_URL}/api/roles/",
                 headers=headers,
@@ -205,7 +222,8 @@ async def list_all_roles(
 @router.post("/roles", response_model=dict)
 async def create_role(
     role_data: dict,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Yeni rol oluştur (Sadece süper admin)
@@ -220,7 +238,6 @@ async def create_role(
     ```
     """
     # Token kontrolü
-    token = current_user.get('token')
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -274,19 +291,12 @@ async def create_role(
 @router.delete("/roles/{role_id}", response_model=MessageResponse)
 async def delete_role(
     role_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Rolü sil (Sadece süper admin)
     """
-    # Token kontrolü
-    token = current_user.get('token')
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token bulunamadı"
-        )
-    
     try:
         async with httpx.AsyncClient() as client:
             headers = {"Authorization": f"Bearer {token}"}
@@ -339,7 +349,8 @@ async def delete_role(
 async def assign_role_to_user(
     user_id: int,
     role_data: UserRoleAssignRequest,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Kullanıcıya rol ata (Sadece süper admin)
@@ -351,14 +362,6 @@ async def assign_role_to_user(
     }
     ```
     """
-    # Token kontrolü
-    token = current_user.get('token')
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token bulunamadı"
-        )
-    
     try:
         async with httpx.AsyncClient() as client:
             headers = {"Authorization": f"Bearer {token}"}
@@ -413,19 +416,12 @@ async def assign_role_to_user(
 async def remove_role_from_user(
     user_id: int,
     role_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Kullanıcıdan rol kaldır (Sadece süper admin)
     """
-    # Token kontrolü
-    token = current_user.get('token')
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token bulunamadı"
-        )
-    
     try:
         async with httpx.AsyncClient() as client:
             headers = {"Authorization": f"Bearer {token}"}
@@ -478,7 +474,8 @@ async def remove_role_from_user(
 
 @router.get("/stats", response_model=dict)
 async def get_system_stats(
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_admin),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Sistem istatistiklerini getir (Sadece süper admin)
@@ -490,7 +487,7 @@ async def get_system_stats(
     """
     try:
         async with httpx.AsyncClient() as client:
-            headers = {"Authorization": f"Bearer {current_user.get('token')}"}
+            headers = {"Authorization": f"Bearer {token}"}
             
             # Kullanıcıları al
             users_response = await client.get(

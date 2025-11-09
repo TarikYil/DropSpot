@@ -97,13 +97,13 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     # Token'ları oluştur
     access_token = create_access_token(
         data={
-            "sub": user.id, 
+            "sub": str(user.id),  # JWT standardına göre sub string olmalı
             "username": user.username,
             "is_superuser": user.is_superuser
         }
     )
     refresh_token_str = create_refresh_token(
-        data={"sub": user.id}
+        data={"sub": str(user.id)}  # JWT standardına göre sub string olmalı
     )
     
     # Refresh token'ı veritabanına kaydet
@@ -119,11 +119,35 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     
+    # Rolleri yükle
+    db.refresh(user, ['roles'])
+    
+    # UserResponse şeması için serialize et
+    user_data = {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "is_active": user.is_active,
+        "is_superuser": user.is_superuser,
+        "is_verified": user.is_verified,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "roles": [
+            {
+                "id": role.id,
+                "name": role.name,
+                "display_name": role.display_name,
+                "description": role.description
+            }
+            for role in user.roles
+        ]
+    }
+    
     return {
         "access_token": access_token,
         "refresh_token": refresh_token_str,
         "token_type": "bearer",
-        "user": user
+        "user": user_data
     }
 
 
@@ -134,13 +158,22 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
     try:
         # Token'ı decode et
         payload = decode_token(refresh_data.refresh_token)
-        user_id = payload.get("sub")
+        user_id_str = payload.get("sub")
         token_type = payload.get("type")
         
         if token_type != "refresh":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Geçersiz token türü"
+            )
+        
+        # sub string olarak geldiği için integer'a çevir
+        try:
+            user_id = int(user_id_str)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Geçersiz kullanıcı ID"
             )
         
         # Veritabanında token'ı kontrol et
@@ -174,13 +207,13 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
         # Yeni token'ları oluştur
         new_access_token = create_access_token(
             data={
-                "sub": user.id, 
+                "sub": str(user.id),  # JWT standardına göre sub string olmalı
                 "username": user.username,
                 "is_superuser": user.is_superuser
             }
         )
         new_refresh_token = create_refresh_token(
-            data={"sub": user.id}
+            data={"sub": str(user.id)}  # JWT standardına göre sub string olmalı
         )
         
         # Eski refresh token'ı iptal et
@@ -241,7 +274,28 @@ async def get_current_user_info(
 ):
     """Mevcut kullanıcı bilgilerini getir"""
     current_user = get_current_user(db, token)
-    return current_user
+    # Rolleri yükle
+    db.refresh(current_user, ['roles'])
+    # UserResponse şeması için serialize et
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "is_active": current_user.is_active,
+        "is_superuser": current_user.is_superuser,
+        "is_verified": current_user.is_verified,
+        "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
+        "roles": [
+            {
+                "id": role.id,
+                "name": role.name,
+                "display_name": role.display_name,
+                "description": role.description
+            }
+            for role in current_user.roles
+        ]
+    }
 
 
 @router.put("/me", response_model=UserResponse)
@@ -347,6 +401,7 @@ async def delete_account(
 async def list_users(
     skip: int = 0,
     limit: int = 100,
+    is_active: Optional[bool] = None,
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ):
@@ -360,8 +415,36 @@ async def list_users(
             detail="Yetersiz yetki. Superuser erişimi gerekli."
         )
     
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    query = db.query(User)
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
+    
+    users = query.offset(skip).limit(limit).all()
+    # Rolleri yükle ve serialize et
+    result = []
+    for user in users:
+        db.refresh(user, ['roles'])
+        user_dict = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "full_name": user.full_name,
+            "is_active": user.is_active,
+            "is_superuser": user.is_superuser,
+            "is_verified": user.is_verified,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "roles": [
+                {
+                    "id": role.id,
+                    "name": role.name,
+                    "display_name": role.display_name,
+                    "description": role.description
+                }
+                for role in user.roles
+            ]
+        }
+        result.append(user_dict)
+    return result
 
 
 @router.get("/users/{user_id}", response_model=UserInDB)
@@ -386,5 +469,81 @@ async def get_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Kullanıcı bulunamadı"
         )
-    return user
+    
+    # Rolleri yükle
+    db.refresh(user, ['roles'])
+    
+    # UserInDB şeması için serialize et
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "is_active": user.is_active,
+        "is_superuser": user.is_superuser,
+        "is_verified": user.is_verified,
+        "created_at": user.created_at,
+        "updated_at": user.updated_at,
+        "last_login": user.last_login
+    }
+
+
+@router.delete("/users/{user_id}", response_model=MessageResponse)
+async def delete_user(
+    user_id: int,
+    permanent: bool = False,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Kullanıcıyı sil veya deaktif et (Sadece superuser)"""
+    current_user = get_current_user(db, token)
+    
+    # Superuser kontrolü
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Yetersiz yetki. Superuser erişimi gerekli."
+        )
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kullanıcı bulunamadı"
+        )
+    
+    # Kendi hesabını silemez
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Kendi hesabınızı silemezsiniz"
+        )
+    
+    if permanent:
+        # Kalıcı silme - tüm ilişkili verileri de sil
+        # Refresh token'ları sil
+        db.query(RefreshToken).filter(RefreshToken.user_id == user_id).delete()
+        # Kullanıcıyı sil
+        db.delete(user)
+        action = "kalıcı olarak silindi"
+    else:
+        # Soft delete - sadece deaktif et
+        user.is_active = False
+        user.updated_at = datetime.utcnow()
+        
+        # Tüm refresh token'ları iptal et
+        tokens = db.query(RefreshToken).filter(
+            RefreshToken.user_id == user_id,
+            RefreshToken.revoked == False
+        ).all()
+        
+        for token in tokens:
+            token.revoked = True
+            token.revoked_at = datetime.utcnow()
+        
+        action = "deaktif edildi"
+    
+    db.commit()
+    
+    return MessageResponse(message=f"Kullanıcı #{user_id} {action}")
 

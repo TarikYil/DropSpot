@@ -15,24 +15,34 @@ export default function SuperAdminPanel() {
   });
   const [activeTab, setActiveTab] = useState('users'); // 'users' or 'roles'
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
+    setError(null);
     try {
       const [usersRes, rolesRes, statsRes] = await Promise.all([
         superAdminService.getUsers(),
         superAdminService.getRoles(),
         superAdminService.getStats()
       ]);
-      setUsers(usersRes.data);
-      setRoles(rolesRes.data);
+      setUsers(usersRes.data || []);
+      setRoles(rolesRes.data || []);
       setStats(statsRes.data);
     } catch (err) {
       console.error('Error loading data:', err);
       console.error('Error response:', err.response?.data);
+      const errorMessage = err.response?.data?.detail || err.message || 'Veriler yüklenirken bir hata oluştu';
+      setError(errorMessage);
+      
+      // 401 hatası ise token süresi dolmuş olabilir, ama otomatik yönlendirme yapma
+      // Kullanıcıya bilgi ver, manuel olarak çıkış yapabilir
+      if (err.response?.status === 401) {
+        setError('Oturum süreniz dolmuş veya yetkiniz yok. Lütfen çıkış yapıp tekrar giriş yapın.');
+      }
     } finally {
       setLoading(false);
     }
@@ -57,12 +67,14 @@ export default function SuperAdminPanel() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
+    if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz? Kullanıcı deaktif edilecektir.')) return;
     try {
-      await superAdminService.deleteUser(userId);
+      const response = await superAdminService.deleteUser(userId);
+      alert(response.data?.message || 'Kullanıcı başarıyla silindi');
       loadData();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Bir hata oluştu');
+      console.error('Delete user error:', err);
+      alert(err.response?.data?.detail || err.message || 'Bir hata oluştu');
     }
   };
 
@@ -107,6 +119,19 @@ export default function SuperAdminPanel() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Süper Admin Paneli</h1>
+        
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+            <p className="font-semibold">Hata:</p>
+            <p>{error}</p>
+            <button 
+              onClick={loadData}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Tekrar Dene
+            </button>
+          </div>
+        )}
 
         {/* Stats */}
         {stats && (
