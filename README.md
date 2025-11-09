@@ -456,10 +456,4 @@ Proje servis bazlı branch yapısına sahiptir:
 
 Her servis kendi branch'inde bağımsız geliştirilir ve main'e merge edilir.
 
-## Lisans
 
-Bu proje Alpaco Full Stack Developer Case çalışmasıdır.
-
-## İletişim
-
-Sorularınız için: hr@alpacotech.com
