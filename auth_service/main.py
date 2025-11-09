@@ -14,7 +14,7 @@ Base.metadata.create_all(bind=engine)
 
 
 def create_default_admin_if_not_exists():
-    """Default admin kullanıcısını oluştur (yoksa)"""
+    """Default admin kullanıcısını oluştur (yoksa) - Her zaman super admin olarak ayarlanır"""
     db = SessionLocal()
     try:
         username = os.getenv("ADMIN_USERNAME", "admin")
@@ -28,17 +28,17 @@ def create_default_admin_if_not_exists():
         ).first()
         
         if existing_user:
-            # Kullanıcı varsa, superuser yap ve bilgileri güncelle
-            existing_user.is_superuser = True
+            # Kullanıcı varsa, MUTLAKA superuser yap ve bilgileri güncelle
+            existing_user.is_superuser = True  # Her zaman super admin
             existing_user.is_active = True
             existing_user.is_verified = True
             existing_user.hashed_password = get_password_hash(password)
             if existing_user.full_name != full_name:
                 existing_user.full_name = full_name
             db.commit()
-            print(f"✅ Default admin kullanıcısı güncellendi: {username}")
+            print(f"✅ Default admin kullanıcısı güncellendi ve super admin yapıldı: {username}")
         else:
-            # Yeni kullanıcı oluştur
+            # Yeni kullanıcı oluştur - MUTLAKA super admin olarak
             hashed_password = get_password_hash(password)
             new_user = User(
                 username=username,
@@ -46,12 +46,12 @@ def create_default_admin_if_not_exists():
                 hashed_password=hashed_password,
                 full_name=full_name,
                 is_active=True,
-                is_superuser=True,
+                is_superuser=True,  # Default olarak super admin
                 is_verified=True
             )
             db.add(new_user)
             db.commit()
-            print(f"✅ Default admin kullanıcısı oluşturuldu: {username}")
+            print(f"✅ Default admin kullanıcısı oluşturuldu (super admin): {username}")
     except Exception as e:
         print(f"❌ Default admin oluşturulurken hata: {str(e)}")
         db.rollback()
