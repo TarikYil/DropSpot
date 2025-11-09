@@ -1,0 +1,138 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from pydantic import BaseModel
+
+from database import get_db
+from models import Role, User
+from utils.auth_utils import get_current_user, oauth2_scheme
+
+router = APIRouter()
+
+
+class RoleCreate(BaseModel):
+    name: str
+    display_name: str
+    description: str = None
+    can_create_drops: bool = False
+    can_edit_drops: bool = False
+    can_delete_drops: bool = False
+    can_approve_claims: bool = False
+    can_manage_users: bool = False
+    can_view_analytics: bool = False
+
+
+class RoleResponse(BaseModel):
+    id: int
+    name: str
+    display_name: str
+    description: str = None
+    can_create_drops: bool
+    can_edit_drops: bool
+    can_delete_drops: bool
+    can_approve_claims: bool
+    can_manage_users: bool
+    can_view_analytics: bool
+    created_at: str = None
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/", response_model=List[RoleResponse])
+async def list_roles(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Tüm rolleri listele (Admin gerekli)"""
+    current_user = get_current_user(db, token)
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu işlem için yetkiniz yok"
+        )
+    
+    roles = db.query(Role).all()
+    return roles
+
+
+@router.post("/", response_model=RoleResponse)
+async def create_role(
+    role_data: RoleCreate,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Yeni rol oluştur (Superuser gerekli)"""
+    current_user = get_current_user(db, token)
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu işlem için yetkiniz yok"
+        )
+    
+    # Rol adı benzersiz mi kontrol et
+    existing_role = db.query(Role).filter(Role.name == role_data.name).first()
+    if existing_role:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"'{role_data.name}' adında bir rol zaten mevcut"
+        )
+    
+    new_role = Role(**role_data.dict())
+    db.add(new_role)
+    db.commit()
+    db.refresh(new_role)
+    
+    return new_role
+
+
+@router.get("/{role_id}", response_model=RoleResponse)
+async def get_role(
+    role_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Rol detayı"""
+    current_user = get_current_user(db, token)
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu işlem için yetkiniz yok"
+        )
+    
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Rol bulunamadı"
+        )
+    
+    return role
+
+
+@router.delete("/{role_id}")
+async def delete_role(
+    role_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Rol sil (Superuser gerekli)"""
+    current_user = get_current_user(db, token)
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu işlem için yetkiniz yok"
+        )
+    
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Rol bulunamadı"
+        )
+    
+    db.delete(role)
+    db.commit()
+    
+    return {"message": "Rol başarıyla silindi"}
+

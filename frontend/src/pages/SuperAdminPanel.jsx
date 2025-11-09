@@ -235,33 +235,60 @@ export default function SuperAdminPanel() {
                   <th className="text-left py-3 px-4">Rol Adı</th>
                   <th className="text-left py-3 px-4">Görünen Ad</th>
                   <th className="text-left py-3 px-4">Açıklama</th>
+                  <th className="text-left py-3 px-4">Yetkiler</th>
                   <th className="text-left py-3 px-4">İşlemler</th>
                 </tr>
               </thead>
               <tbody>
                 {roles.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="py-8 text-center text-gray-500">
+                    <td colSpan="5" className="py-8 text-center text-gray-500">
                       Henüz rol yok
                     </td>
                   </tr>
                 ) : (
-                  roles.map((role) => (
-                    <tr key={role.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-mono text-sm">{role.name}</td>
-                      <td className="py-3 px-4">{role.display_name}</td>
-                      <td className="py-3 px-4 text-gray-600">{role.description || '-'}</td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => handleDeleteRole(role.id, role.display_name)}
-                          className="text-red-600 hover:text-red-700"
-                          title="Rolü Sil"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  roles.map((role) => {
+                    const permissions = [];
+                    if (role.can_create_drops) permissions.push('Drop Oluştur');
+                    if (role.can_edit_drops) permissions.push('Drop Düzenle');
+                    if (role.can_delete_drops) permissions.push('Drop Sil');
+                    if (role.can_approve_claims) permissions.push('Claim Onayla');
+                    if (role.can_manage_users) permissions.push('Kullanıcı Yönet');
+                    if (role.can_view_analytics) permissions.push('Analitik Görüntüle');
+                    
+                    return (
+                      <tr key={role.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 font-mono text-sm">{role.name}</td>
+                        <td className="py-3 px-4 font-medium">{role.display_name}</td>
+                        <td className="py-3 px-4 text-gray-600">{role.description || '-'}</td>
+                        <td className="py-3 px-4">
+                          {permissions.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {permissions.map((perm, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                                >
+                                  {perm}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">Yetki yok</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleDeleteRole(role.id, role.display_name)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Rolü Sil"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -367,26 +394,69 @@ export default function SuperAdminPanel() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Rol Ata</p>
-                    <div className="flex flex-wrap gap-2">
-                      {roles.map((role) => {
-                        const hasRole = selectedUser.roles?.some(r => r.id === role.id);
-                        return (
-                          <button
-                            key={role.id}
-                            onClick={() => hasRole ? handleRemoveRole(selectedUser.id, role.id) : handleAssignRole(selectedUser.id, role.id)}
-                            className={`px-3 py-1 rounded-full text-sm flex items-center space-x-1 ${
-                              hasRole
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                            }`}
-                          >
-                            {hasRole ? <UserMinus size={14} /> : <UserPlus size={14} />}
-                            <span>{role.display_name}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <p className="text-sm font-medium text-gray-700 mb-3">Rol Ata / Kaldır</p>
+                    {roles.length === 0 ? (
+                      <p className="text-sm text-gray-500">Henüz rol tanımlanmamış</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {roles.map((role) => {
+                          const hasRole = selectedUser.roles?.some(r => r.id === role.id);
+                          const permissions = [];
+                          if (role.can_create_drops) permissions.push('Drop Oluştur');
+                          if (role.can_edit_drops) permissions.push('Drop Düzenle');
+                          if (role.can_delete_drops) permissions.push('Drop Sil');
+                          if (role.can_approve_claims) permissions.push('Claim Onayla');
+                          if (role.can_manage_users) permissions.push('Kullanıcı Yönet');
+                          if (role.can_view_analytics) permissions.push('Analitik');
+                          
+                          return (
+                            <div
+                              key={role.id}
+                              className={`p-3 rounded-lg border-2 ${
+                                hasRole
+                                  ? 'border-green-300 bg-green-50'
+                                  : 'border-gray-200 bg-white'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium">{role.display_name}</span>
+                                    <span className="text-xs text-gray-500 font-mono">({role.name})</span>
+                                  </div>
+                                  {role.description && (
+                                    <p className="text-xs text-gray-600 mt-1">{role.description}</p>
+                                  )}
+                                  {permissions.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {permissions.map((perm, idx) => (
+                                        <span
+                                          key={idx}
+                                          className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded"
+                                        >
+                                          {perm}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => hasRole ? handleRemoveRole(selectedUser.id, role.id) : handleAssignRole(selectedUser.id, role.id)}
+                                  className={`ml-3 px-3 py-1 rounded text-sm flex items-center space-x-1 ${
+                                    hasRole
+                                      ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {hasRole ? <UserMinus size={14} /> : <UserPlus size={14} />}
+                                  <span>{hasRole ? 'Kaldır' : 'Ata'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button

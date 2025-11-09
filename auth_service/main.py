@@ -4,13 +4,85 @@ from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import uvicorn
 from database import engine, Base, get_db, SessionLocal
-from routers import auth
-from models import User
+from routers import auth, roles
+from models import User, Role
 from utils.auth_utils import get_password_hash
 import os
 
 # Veritabanı tablolarını oluştur
 Base.metadata.create_all(bind=engine)
+
+
+def create_default_roles_if_not_exists():
+    """Default rolleri oluştur (yoksa)"""
+    db = SessionLocal()
+    try:
+        default_roles = [
+            {
+                "name": "admin",
+                "display_name": "Admin",
+                "description": "Tam yetki - tüm işlemleri yapabilir",
+                "can_create_drops": True,
+                "can_edit_drops": True,
+                "can_delete_drops": True,
+                "can_approve_claims": True,
+                "can_manage_users": True,
+                "can_view_analytics": True
+            },
+            {
+                "name": "moderator",
+                "display_name": "Moderatör",
+                "description": "Drop yönetimi ve claim onaylama yetkisi",
+                "can_create_drops": True,
+                "can_edit_drops": True,
+                "can_delete_drops": False,
+                "can_approve_claims": True,
+                "can_manage_users": False,
+                "can_view_analytics": True
+            },
+            {
+                "name": "creator",
+                "display_name": "İçerik Üreticisi",
+                "description": "Sadece drop oluşturabilir",
+                "can_create_drops": True,
+                "can_edit_drops": True,
+                "can_delete_drops": False,
+                "can_approve_claims": False,
+                "can_manage_users": False,
+                "can_view_analytics": False
+            },
+            {
+                "name": "user",
+                "display_name": "Kullanıcı",
+                "description": "Normal kullanıcı - drop'lara katılabilir",
+                "can_create_drops": False,
+                "can_edit_drops": False,
+                "can_delete_drops": False,
+                "can_approve_claims": False,
+                "can_manage_users": False,
+                "can_view_analytics": False
+            }
+        ]
+        
+        for role_data in default_roles:
+            existing_role = db.query(Role).filter(Role.name == role_data["name"]).first()
+            if not existing_role:
+                new_role = Role(**role_data)
+                db.add(new_role)
+                print(f"✅ Default rol oluşturuldu: {role_data['display_name']} ({role_data['name']})")
+            else:
+                # Mevcut rolü güncelle (yetkileri güncelle)
+                for key, value in role_data.items():
+                    if key != "name":  # name değiştirilmez
+                        setattr(existing_role, key, value)
+                print(f"✅ Default rol güncellendi: {role_data['display_name']} ({role_data['name']})")
+        
+        db.commit()
+    except Exception as e:
+        print(f"❌ Default rolleri oluşturulurken hata: {str(e)}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 def create_default_admin_if_not_exists():
@@ -64,6 +136,7 @@ async def lifespan(app: FastAPI):
     """Startup ve shutdown event'leri"""
     # Startup
     print("🚀 Auth Service başlatılıyor...")
+    create_default_roles_if_not_exists()
     create_default_admin_if_not_exists()
     yield
     # Shutdown
@@ -91,6 +164,7 @@ app.add_middleware(
 
 # Router'ları dahil et
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(roles.router, prefix="/api/roles", tags=["Roles"])
 
 
 @app.get("/")
