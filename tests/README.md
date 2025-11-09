@@ -1,8 +1,8 @@
 # DropSpot Test Suite
 
-Kapsamlı **Unit Test** ve **Integration Test** yapısı.
+Kapsamlı Unit Test ve Integration Test yapısı.
 
-## 📁 Klasör Yapısı
+## Klasör Yapısı
 
 ```
 tests/
@@ -25,7 +25,7 @@ tests/
     └── test_helpers.py
 ```
 
-## 🚀 Kurulum
+## Kurulum
 
 ### 1. Test Dependencies Yükle
 
@@ -50,7 +50,7 @@ docker-compose exec postgres psql -U postgres -c "CREATE DATABASE test_auth_db;"
 docker-compose exec postgres psql -U postgres -c "CREATE DATABASE test_dropspot_db;"
 ```
 
-## 🧪 Testleri Çalıştırma
+## Testleri Çalıştırma
 
 ### Tüm Testleri Çalıştır
 
@@ -139,7 +139,7 @@ make test-coverage
 
 Coverage raporu `htmlcov/index.html` dosyasında oluşturulur.
 
-## 📊 Test Markers
+## Test Markers
 
 Tests/pytest.ini dosyasında tanımlı marker'lar:
 
@@ -162,7 +162,7 @@ pytest tests/ -m "integration and backend"
 pytest tests/ -m "not slow"
 ```
 
-## 🔧 Test Yazma Örnekleri
+## Test Yazma Örnekleri
 
 ### Unit Test Örneği
 
@@ -204,7 +204,7 @@ def test_user_registration(auth_client):
     assert data["email"] == "test@example.com"
 ```
 
-## 🎯 Fixtures
+## Fixtures
 
 ### Ortak Fixtures (conftest.py)
 
@@ -229,7 +229,7 @@ def test_with_fixtures(auth_client, db_session_auth, sample_user_data):
     assert user is not None
 ```
 
-## 📈 Test Çıktısı
+## Test Çıktısı
 
 ### Başarılı Test Çıktısı
 
@@ -258,7 +258,7 @@ backend/utils/security.py            56      5    91%   78-82
 TOTAL                               267     25    91%
 ```
 
-## 🐛 Hata Ayıklama
+## Hata Ayıklama
 
 ### Verbose Mode
 
@@ -284,7 +284,7 @@ pytest tests/unit/test_auth_utils.py::TestPasswordHashing::test_password_hashing
 pytest tests/ -s
 ```
 
-## 🔄 CI/CD Entegrasyonu
+## CI/CD Entegrasyonu
 
 GitHub Actions örneği:
 
@@ -311,7 +311,7 @@ jobs:
         uses: codecov/codecov-action@v2
 ```
 
-## 📝 Best Practices
+## Best Practices
 
 1. **Test İsimlendirme**: `test_` prefix kullan
 2. **Descriptive Names**: Test adı ne test edildiğini açıklasın
@@ -321,7 +321,7 @@ jobs:
 6. **Fast Tests**: Unit testleri hızlı tut
 7. **Independent Tests**: Testler birbirinden bağımsız olmalı
 
-## 🚨 Sorun Giderme
+## Sorun Giderme
 
 ### Database Connection Hatası
 
@@ -341,7 +341,7 @@ export PYTHONPATH="${PYTHONPATH}:${PWD}"
 
 conftest.py dosyasının doğru konumda olduğundan emin ol.
 
-## 📚 Kaynaklar
+## Kaynaklar
 
 - [Pytest Documentation](https://docs.pytest.org/)
 - [FastAPI Testing](https://fastapi.tiangolo.com/tutorial/testing/)

@@ -1,16 +1,16 @@
-# DropSpot AI Service 🤖
+# DropSpot AI Service
 
 Gemini tabanlı RAG (Retrieval Augmented Generation) chatbot servisi.
 
-## 🎯 Özellikler
+## Özellikler
 
-- **Gemini AI Integration**: Google Gemini Pro modeli ile güçlü AI yanıtları
-- **RAG Sistemi**: Backend'den gerçek zamanlı veri çekerek context-aware yanıtlar
-- **Chat History**: Konuşma geçmişi ile bağlamsal sohbet
-- **Auth Integration**: Kullanıcıya özel bilgiler (token ile)
-- **Platform Knowledge**: Drop'lar, waitlist, claim süreçleri hakkında bilgi
+- Gemini AI Integration: Google Gemini Pro modeli ile güçlü AI yanıtları
+- RAG Sistemi: Backend'den gerçek zamanlı veri çekerek context-aware yanıtlar
+- Chat History: Konuşma geçmişi ile bağlamsal sohbet
+- Auth Integration: Kullanıcıya özel bilgiler (token ile)
+- Platform Knowledge: Drop'lar, waitlist, claim süreçleri hakkında bilgi
 
-## 🏗️ Mimari
+## Mimari
 
 ```
 ┌─────────────┐      ┌──────────────┐      ┌─────────────┐
@@ -23,7 +23,7 @@ Gemini tabanlı RAG (Retrieval Augmented Generation) chatbot servisi.
                             └─────▶ Auth Service (User Info)
 ```
 
-## 📁 Klasör Yapısı
+## Klasör Yapısı
 
 ```
 ai_service/
@@ -41,7 +41,7 @@ ai_service/
 └── Dockerfile            # Container image
 ```
 
-## 🚀 Kullanım
+## Kullanım
 
 ### Docker ile Çalıştırma
 
@@ -105,7 +105,7 @@ curl -X POST "http://localhost:8004/api/chat/ask" \
 curl http://localhost:8004/health
 ```
 
-## 📊 Response Örnekleri
+## Response Örnekleri
 
 ### Başarılı Chat Response
 
@@ -129,7 +129,7 @@ curl http://localhost:8004/health
 }
 ```
 
-## 🔧 Konfigürasyon
+## Konfigürasyon
 
 Environment değişkenleri:
 
@@ -156,7 +156,7 @@ TOP_K=40
 SECRET_KEY=your-secret-key
 ```
 
-## 💡 RAG Context Stratejisi
+## RAG Context Stratejisi
 
 AI servisi soruları analiz ederek backend'den ilgili bilgileri çeker:
 
@@ -168,7 +168,7 @@ AI servisi soruları analiz ederek backend'den ilgili bilgileri çeker:
 | admin, yönetim | - | Admin yetkiler |
 | platform, nedir | - | Platform genel bilgi |
 
-## 🤖 Gemini Model Ayarları
+## Gemini Model Ayarları
 
 ```python
 generation_config = {
@@ -179,20 +179,20 @@ generation_config = {
 }
 ```
 
-## 🔐 Güvenlik
+## Güvenlik
 
 - **Token Opsiyonel**: Token olmadan genel bilgi, token ile kişisel bilgi
 - **Safety Settings**: Zararlı içerik filtreleme aktif
 - **CORS**: Cross-origin isteklere izin verilir (production'da kısıtlanmalı)
 - **Rate Limiting**: TODO: Implement rate limiting
 
-## 📈 Performans
+## Performans
 
 - **Gemini API Latency**: ~1-3 saniye
 - **RAG Context Fetching**: ~100-500ms
 - **Total Response Time**: ~1.5-4 saniye
 
-## 🧪 Test Senaryoları
+## Test Senaryoları
 
 ```bash
 # 1. Platform hakkında genel soru
@@ -214,7 +214,7 @@ generation_config = {
 "Benim claim'lerim neler?"
 ```
 
-## 🚨 Hata Durumları
+## Hata Durumları
 
 | Durum | Status Code | Açıklama |
 |-------|-------------|----------|
@@ -222,14 +222,14 @@ generation_config = {
 | Backend ulaşılamaz | 500 | Backend servisi çalışmıyor |
 | Geçersiz request | 422 | Message boş veya çok uzun |
 
-## 📝 Geliştirme Notları
+## Geliştirme Notları
 
 1. **Gemini API Key**: Google AI Studio'dan ücretsiz alınabilir
 2. **Context Length**: 4000 karakter sınırı (daha fazlası için ayarlanabilir)
 3. **Chat History**: Son 10 mesaj saklanır
 4. **Async Operations**: Tüm API çağrıları async
 
-## 🔮 Gelecek Özellikler
+## Gelecek Özellikler
 
 - [ ] Redis ile chat history cache
 - [ ] Rate limiting
@@ -239,7 +239,7 @@ generation_config = {
 - [ ] User feedback sistemi
 - [ ] A/B testing farklı promptlar için
 
-## 📚 Kaynaklar
+## Kaynaklar
 
 - [Google Gemini API Docs](https://ai.google.dev/docs)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
