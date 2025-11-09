@@ -460,7 +460,10 @@ Admin kullanıcıları bu sayfada tüm claim'leri görüntüleyebilir ve yönete
   - #12, #4, #10, 1, Onaylandı (yeşil badge), 07.11.2025
 
 ### Süper Admin Paneli
+<img width="1914" height="907" alt="image" src="https://github.com/user-attachments/assets/e3fb179f-0b67-48d5-8b49-1cb9f56980be" />
+
 Süper admin kullanıcıları bu sayfada kullanıcıları ve rollerini yönetebilir. Kullanıcı listesi, rol atama ve yetki yönetimi özellikleri bulunur.
+<img width="1913" height="907" alt="image" src="https://github.com/user-attachments/assets/939eb697-7984-4216-9c1e-c8055ae43c94" />
 
 **Özellikler:**
 - Kullanıcı listesi tablosu
