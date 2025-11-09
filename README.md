@@ -261,14 +261,159 @@ Frontend `http://localhost:3000` adresinde çalışır.
 
 ## 6. Ekran Görüntüleri
 
-### Drop Listesi Sayfası
-Ana sayfada tüm aktif drop'lar listelenir. Kullanıcılar drop'lara göz atabilir, arama yapabilir ve bekleme listesine katılabilir.
+### Ana Sayfa (Drop Listesi)
+Ana sayfada tüm aktif drop'lar listelenir. Kullanıcılar drop'lara göz atabilir, arama yapabilir ve bekleme listesine katılabilir. Her drop kartında ürün görseli, başlık, açıklama, stok bilgisi ve konum bilgisi görüntülenir.
 
-### Claim Ekranı
-Kullanıcılar claim window açıldığında drop detay sayfasından claim yapabilir. Konum kontrolü yapılır ve verification code oluşturulur.
+**Özellikler:**
+- Drop kartları grid layout ile gösterilir
+- Arama ve filtreleme özellikleri
+- Stok durumu görsel olarak gösterilir
+- Responsive tasarım (mobil uyumlu)
 
-### Admin Panel
-Admin kullanıcıları drop'ları oluşturabilir, güncelleyebilir ve silebilir. Ayrıca tüm claim'leri görüntüleyebilir ve onaylayabilir.
+### Drop Detay Sayfası
+Kullanıcılar drop detay sayfasında ürün hakkında detaylı bilgi görüntüleyebilir. Sayfada ürün görseli, açıklama, stok durumu, bekleme listesi sayısı, konum bilgisi ve zaman bilgisi yer alır.
+
+**Özellikler:**
+- Büyük ürün görseli
+- Stok durumu ve progress bar
+- Bekleme listesi sayısı
+- Konum bilgisi ve mesafe kontrolü
+- Başlangıç ve bitiş zamanı
+- Claim window açıldığında claim butonu aktif olur
+- Konum kontrolü ile claim yapılabilir
+
+**Örnek Görüntü:**
+- Sol tarafta büyük ürün görseli (örn: Nike Air Force 1 x Carhartt WIP)
+- Sağ tarafta ürün detayları:
+  - Başlık: "Exclusive Hoodie Drop #2"
+  - Stok: 48/64 (progress bar ile)
+  - Bekleme Listesi: 6 kişi bekliyor
+  - Konum: Beşiktaş, İstanbul (mesafe bilgisi ile)
+  - Zaman: Başlangıç ve bitiş tarihleri
+
+### Bekleme Listem Sayfası
+Kullanıcılar bu sayfada bekleme listesine ekledikleri drop'ları görüntüleyebilir. Her drop için sıra numarası, ürün görseli, başlık, stok durumu, konum ve tarih bilgisi gösterilir.
+
+**Özellikler:**
+- Grid layout ile drop kartları
+- Her drop için sıra numarası (örn: "Sıra: 1")
+- Drop detaylarına gitme butonu
+- Bekleme listesinden çıkarma butonu
+- Stok durumu takibi
+
+**Örnek Görüntü:**
+- 2 satır, 3 sütun grid layout
+- Her kartta:
+  - Sıra numarası badge'i
+  - Ürün görseli
+  - Başlık ve açıklama
+  - Stok bilgisi (örn: "Stok: 139/148")
+  - Konum (örn: "Beyoğlu, İstanbul")
+  - Tarih (örn: "16.11.2025")
+  - "Detay →" butonu
+  - Çıkış (X) butonu
+
+### Claim'lerim Sayfası
+Kullanıcılar bu sayfada yaptıkları claim'leri görüntüleyebilir. Her claim için durum (Onaylandı/Reddedildi/Beklemede), ürün görseli, başlık, verification code ve tarih bilgisi gösterilir.
+
+**Özellikler:**
+- Durum badge'leri (yeşil: Onaylandı, kırmızı: Reddedildi)
+- Ürün görselleri
+- Verification code bilgisi
+- Claim tarihi
+- Drop detaylarına gitme butonu
+
+**Örnek Görüntü:**
+- Grid layout ile claim kartları
+- Her kartta:
+  - Durum badge'i (üst sağ köşede)
+  - Ürün görseli
+  - Başlık ve açıklama
+  - Miktar: 1
+  - Kod: CODE-2-6-9526
+  - Tarih: 07.11.2025
+  - "Drop Detayı →" butonu
+
+**Durum Örnekleri:**
+- Onaylandı: Yeşil badge, checkmark ikonu
+- Reddedildi: Kırmızı badge, X ikonu
+- Beklemede: Sarı badge (varsayılan)
+
+### Admin Paneli - Drop'lar Sekmesi
+Admin kullanıcıları bu sayfada drop'ları yönetebilir. İstatistik kartları, drop listesi tablosu ve yeni drop oluşturma butonu bulunur.
+
+**Özellikler:**
+- İstatistik kartları:
+  - Toplam Drop sayısı
+  - Aktif Drop sayısı
+  - Toplam Claim sayısı
+  - Waitlist sayısı
+- Drop listesi tablosu:
+  - Başlık, Stok, Durum, İşlemler kolonları
+  - Her drop için düzenleme ve silme butonları
+  - Durum badge'leri (aktif/pasif)
+- "+ Yeni Drop" butonu ile yeni drop oluşturma
+
+**Örnek Görüntü:**
+- Üst kısımda "Admin Paneli" başlığı ve "+ Yeni Drop" butonu
+- İstatistik kartları (4 adet):
+  - Toplam Drop: 8
+  - Aktif Drop: 3
+  - Toplam Claim: 24
+  - Waitlist: 61
+- Tablo başlıkları: Başlık, Stok, Durum, İşlemler
+- Tablo satırları:
+  - "Sınırlı Stoklu Ürün #4" - Stok: 169/181 - Durum: active (yeşil) - Düzenle/Sil
+  - "Exclusive Hoodie Drop #1" - Stok: 43/71 - Durum: active (yeşil) - Düzenle/Sil
+  - "Exclusive Hoodie Drop #2" - Stok: 48/64 - Durum: active (yeşil) - Düzenle/Sil
+
+### Admin Paneli - Claim'ler Sekmesi
+Admin kullanıcıları bu sayfada tüm claim'leri görüntüleyebilir ve yönetebilir. Claim'ler durumlarına göre filtrelenebilir.
+
+**Özellikler:**
+- Durum filtreleme butonları:
+  - Beklemede (Pending)
+  - Onaylandı (Approved) - aktif
+  - Reddedildi (Rejected)
+- Claim listesi tablosu:
+  - ID, Drop ID, Kullanıcı ID, Miktar, Durum, Tarih, İşlemler kolonları
+  - Durum badge'leri
+  - Onaylama/Reddetme işlemleri
+
+**Örnek Görüntü:**
+- "Claim'ler" sekmesi aktif (mavi alt çizgi)
+- Filtre butonları: Beklemede (gri), Onaylandı (mavi, aktif), Reddedildi (gri)
+- Tablo başlıkları: ID, Drop ID, Kullanıcı ID, Miktar, Durum, Tarih, İşlemler
+- Tablo satırları:
+  - #6, #2, #6, 1, Onaylandı (yeşil badge), 07.11.2025
+  - #7, #3, #1, 1, Onaylandı (yeşil badge), 07.11.2025
+  - #12, #4, #10, 1, Onaylandı (yeşil badge), 07.11.2025
+
+### Süper Admin Paneli
+Süper admin kullanıcıları bu sayfada kullanıcıları ve rollerini yönetebilir. Kullanıcı listesi, rol atama ve yetki yönetimi özellikleri bulunur.
+
+**Özellikler:**
+- Kullanıcı listesi tablosu
+- Rol atama işlemleri
+- Kullanıcı durumu yönetimi (aktif/pasif)
+- Yetki yönetimi
+
+### Ayarlar Sayfası
+Kullanıcılar bu sayfada profil bilgilerini görüntüleyebilir ve güncelleyebilir.
+
+**Özellikler:**
+- Profil bilgileri (ad, email, kullanıcı adı)
+- Şifre değiştirme
+- Hesap ayarları
+
+### AI Chatbot Widget
+Sağ alt köşede bulunan chatbot widget'ı ile kullanıcılar platform hakkında sorular sorabilir.
+
+**Özellikler:**
+- Sağ alt köşede sabit konum
+- Mor renkli chat bubble ikonu
+- Tıklanınca açılan chat penceresi
+- Platform bilgileri hakkında AI destekli yanıtlar
 
 ## 7. Teknik Tercihler ve Kişisel Katkılar
 
