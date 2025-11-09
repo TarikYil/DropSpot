@@ -37,6 +37,10 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       PORT: 8000
       ENVIRONMENT: development
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_FULL_NAME: ${ADMIN_FULL_NAME:-Default Admin}
     ports:
       - "8001:8000"
     depends_on:
