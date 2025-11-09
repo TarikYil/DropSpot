@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     SERVICE_NAME: str = "DropSpot AI Service"
     VERSION: str = "1.0.0"
     PORT: int = int(os.getenv("PORT", 8004))
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Gemini API
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyCjy1PrC-Sqbs5ELXnQpH94Z3i3WU_Yppg")
