@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-11-07T14:47:46.442110",
+  "backend_url": "http://backend:8002",
+  "ai_service_url": "http://localhost:8004",
+  "tests": [
+    {
+      "test_number": 1,
+      "name": "Drop Listesi",
+      "question": "Tüm drop'ları listele ve detaylarını göster",
+      "status": "passed",
+      "context_used": true,
+      "response": "DropSpot platformunda aktif olan drop'lar ve detayları aşağıdadır:\n\n**DROP #3: VIP Koleksiyon Ürünü #3**\n*   Açıklama: Koleksiyonerler için özel tasarım.\n*   Durum: active\n*   Stok: 139/148 (Kalan/Toplam)\n*   Bekleme Listesinde: 8 kişi\n*   Başlangıç: 2025-11-13 18:44:36\n*   Bitiş: 2025-11-15 23:44:36\n*   Konum: Beyoğlu, İstanbul\n\n**DROP #4: Sınırlı Stoklu Ürün #4**\n*   Açıklama: Sınırlı sayıda üretilen koleksiyon parçası.\n*   Durum: active\n*   Stok: 168/181 (Kalan/Toplam)\n*   Bekleme Listesinde: 8 kişi\n*   Başlangıç: 2025-11-13 14:44:36\n*   Bitiş: 2025-11-15 15:44:36\n*   Konum: Şişli, İstanbul\n\n**DROP #1: Exclusive Hoodie Drop #1**\n*   Açıklama: Yüksek kaliteli malzemelerden üretilmiş özel tasarım ürün.\n*   Durum: active\n*   Stok: 42/71 (Kalan/Toplam)\n*   Bekleme Listesinde: 8 kişi\n*   Başlangıç: 2025-11-07 13:44:36\n*   Bitiş: 2025-11-10 03:44:36\n*   Konum: Beşiktaş, İstanbul\n\n**DROP #2: Exclusive Hoodie Drop #2**\n*   Açıklama: Sınırlı sayıda üretilen koleksiyon parçası.\n*   Durum: active\n*   Stok: 48/64 (Kalan/Toplam)\n*   Bekleme Listesinde: 8 kişi\n*   Başlangıç: 2025-11-06 23:44:36\n*   Bitiş: 2025-11-09 04:44:36\n*   Konum: Beşiktaş, İstanbul",
+      "error": null,
+      "response_length": 1161
+    },
+    {
+      "test_number": 2,
+      "name": "Aktif Drop'lar",
+      "question": "Şu anda aktif olan drop'lar neler?",
+      "status": "passed",
+      "context_used": true,
+      "response": "Şu anda aktif olan drop'lar şunlardır:\n\n1.  **DROP #3: VIP Koleksiyon Ürünü #3**\n    *   Açıklama: Koleksiyonerler için özel tasarım.\n    *   Stok: 139/148\n    *   Konum: Beyoğlu, İstanbul\n2.  **DROP #4: Sınırlı Stoklu Ürün #4**\n    *   Açıklama: Sınırlı sayıda üretilen koleksiyon parçası.\n    *   Stok: 168/181\n    *   Konum: Şişli, İstanbul\n3.  **DROP #1: Exclusive Hoodie Drop #1**\n    *   Açıklama: Yüksek kaliteli malzemelerden üretilmiş özel tasarım ürün.\n    *   Stok: 42/71\n    *   Konum: Beşiktaş, İstanbul\n4.  **DROP #2: Exclusive Hoodie Drop #2**\n    *   Açıklama: Sınırlı sayıda üretilen koleksiyon parçası.\n    *   Stok: 48/64\n    *   Konum: Beşiktaş, İstanbul",
+      "error": null,
+      "response_length": 674
+    },
+    {
+      "test_number": 3,
+      "name": "Waitlist İstatistikleri",
+      "question": "Waitlist istatistiklerini göster, kaç kişi bekliyor?",
+      "status": "passed",
+      "context_used": true,
+      "response": "DropSpot platformundaki güncel bekleme listesi istatistikleri aşağıdaki gibidir:\n\n*   **Drop #1 (Exclusive Hoodie Drop #1):** 8 kişi bekliyor.\n*   **Drop #2 (Exclusive Hoodie Drop #2):** 8 kişi bekliyor.",
+      "error": null,
+      "response_length": 203
+    },
+    {
+      "test_number": 4,
+      "name": "Stok Durumu",
+      "question": "Hangi drop'larda stok kalmış?",
+      "status": "passed",
+      "context_used": true,
+      "response": "Tüm aktif drop'larda stok bulunmaktadır:\n\n*   **DROP #3: VIP Koleksiyon Ürünü #3** (139/148 stokta)\n*   **DROP #4: Sınırlı Stoklu Ürün #4** (168/181 stokta)\n*   **DROP #1: Exclusive Hoodie Drop #1** (42/71 stokta)\n*   **DROP #2: Exclusive Hoodie Drop #2** (48/64 stokta)",
+      "error": null,
+      "response_length": 270
+    }
+  ],
+  "backend_drop_count": 4,
+  "summary": {
+    "total_tests": 4,
+    "passed": 4,
+    "failed": 0,
+    "success_rate": 100.0
+  }
+}

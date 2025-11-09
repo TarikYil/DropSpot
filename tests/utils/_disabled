@@ -1,0 +1,141 @@
+"""
+Test Helper Functions
+"""
+from datetime import datetime, timedelta
+import sys
+from pathlib import Path
+
+
+def _import_auth_models():
+    """Auth service modellerini import et"""
+    auth_path = Path(__file__).parent.parent.parent / "auth_service"
+    if str(auth_path) not in sys.path:
+        sys.path.insert(0, str(auth_path))
+    from models import User
+    from utils.auth_utils import get_password_hash
+    if str(auth_path) in sys.path:
+        sys.path.remove(str(auth_path))
+    return User, get_password_hash
+
+
+def _import_backend_models():
+    """Backend modellerini import et"""
+    backend_path = Path(__file__).parent.parent.parent / "backend"
+    if str(backend_path) not in sys.path:
+        sys.path.insert(0, str(backend_path))
+    from models import Drop
+    if str(backend_path) in sys.path:
+        sys.path.remove(str(backend_path))
+    return Drop
+
+
+# Modülleri import et
+User, get_password_hash = _import_auth_models()
+Drop = _import_backend_models()
+
+
+def create_test_user(session, **kwargs):
+    """Test kullanıcısı oluştur
+    
+    Args:
+        session: Database session
+        **kwargs: User model parametreleri
+        
+    Returns:
+        User: Oluşturulan kullanıcı
+    """
+    defaults = {
+        "email": "test@example.com",
+        "username": "testuser",
+        "hashed_password": get_password_hash("TestPass123"),
+        "is_active": True,
+        "is_superuser": False
+    }
+    defaults.update(kwargs)
+    
+    user = User(**defaults)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+def create_test_admin(session, **kwargs):
+    """Test admin kullanıcısı oluştur"""
+    defaults = {
+        "email": "admin@example.com",
+        "username": "admin",
+        "is_superuser": True
+    }
+    defaults.update(kwargs)
+    return create_test_user(session, **defaults)
+
+
+def create_test_drop(session, created_by=1, **kwargs):
+    """Test drop oluştur
+    
+    Args:
+        session: Database session
+        created_by: Drop'u oluşturan user ID
+        **kwargs: Drop model parametreleri
+        
+    Returns:
+        Drop: Oluşturulan drop
+    """
+    defaults = {
+        "title": "Test Drop",
+        "description": "Test drop description",
+        "total_quantity": 100,
+        "latitude": 41.0082,
+        "longitude": 28.9784,
+        "address": "Test Address",
+        "radius_meters": 500,
+        "created_by": created_by,
+        "start_time": datetime.utcnow() + timedelta(hours=1),
+        "end_time": datetime.utcnow() + timedelta(hours=24)
+    }
+    defaults.update(kwargs)
+    
+    drop = Drop(**defaults)
+    session.add(drop)
+    session.commit()
+    session.refresh(drop)
+    return drop
+
+
+def get_auth_headers(client, username="testuser", password="TestPass123"):
+    """Test için authentication headers al
+    
+    Args:
+        client: FastAPI test client
+        username: Kullanıcı adı
+        password: Şifre
+        
+    Returns:
+        dict: Authorization headers
+    """
+    login_data = {
+        "username": username,
+        "password": password
+    }
+    response = client.post("/api/auth/login", json=login_data)
+    
+    if response.status_code == 200:
+        token = response.json()["access_token"]
+        return {"Authorization": f"Bearer {token}"}
+    return {}
+
+
+def assert_timestamps_valid(obj):
+    """Timestamp alanlarını kontrol et
+    
+    Args:
+        obj: created_at ve/veya updated_at alanları olan object
+    """
+    if hasattr(obj, 'created_at'):
+        assert obj.created_at is not None
+        assert isinstance(obj.created_at, datetime)
+    
+    if hasattr(obj, 'updated_at') and obj.updated_at is not None:
+        assert isinstance(obj.updated_at, datetime)
+

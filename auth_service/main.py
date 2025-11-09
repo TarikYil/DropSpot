@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
 from database import engine, Base, get_db
-from routers import auth, roles
+from routers import auth
 import os
 
 # Veritabanı tablolarını oluştur
@@ -29,7 +29,6 @@ app.add_middleware(
 
 # Router'ları dahil et
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(roles.router, prefix="/api/roles", tags=["Roles & Permissions"])
 
 
 @app.get("/")
@@ -45,9 +44,9 @@ async def root():
 @app.get("/health")
 async def health_check(db: Session = Depends(get_db)):
     """Sağlık kontrolü endpoint'i - veritabanı bağlantısını da kontrol eder"""
-    from sqlalchemy import text
     try:
         # Veritabanı bağlantısını test et
+        from sqlalchemy import text
         db.execute(text("SELECT 1"))
         return {
             "status": "healthy",

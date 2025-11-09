@@ -45,17 +45,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         payload = decode_token(token)
         user_id: int = payload.get("sub")
         username: str = payload.get("username")
+        is_superuser: bool = payload.get("is_superuser", False)
         token_type: str = payload.get("type")
         
         if user_id is None or token_type != "access":
             raise credentials_exception
         
-        # Auth servisinden kullanıcı bilgilerini al (opsiyonel - cache'lenebilir)
-        # Şimdilik token'dan gelen bilgileri kullanıyoruz
+        # Token'dan gelen bilgileri kullan
         return {
             "user_id": user_id,
             "username": username,
-            "is_superuser": False  # Bunu auth servisinden almak daha iyi
+            "is_superuser": is_superuser
         }
         
     except JWTError:
@@ -92,7 +92,7 @@ async def get_current_user_with_details(token: str = Depends(oauth2_scheme)) -> 
         )
 
 
-async def require_admin(current_user: dict = Depends(get_current_user_with_details)):
+async def require_admin(current_user: dict = Depends(get_current_user)):
     """Admin yetkisi kontrolü yapar"""
     if not current_user.get("is_superuser", False):
         raise HTTPException(

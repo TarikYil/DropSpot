@@ -47,9 +47,9 @@ async def root():
 @app.get("/health")
 async def health_check(db: Session = Depends(get_db)):
     """Sağlık kontrolü endpoint'i - veritabanı bağlantısını da kontrol eder"""
-    from sqlalchemy import text
     try:
         # Veritabanı bağlantısını test et
+        from sqlalchemy import text
         db.execute(text("SELECT 1"))
         return {
             "status": "healthy",
