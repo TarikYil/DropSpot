@@ -4,14 +4,14 @@ Modern React + Vite + Tailwind CSS frontend uygulaması.
 
 ## Özellikler
 
-- 🎨 Modern ve kullanıcı dostu UI
-- 🔐 Sign in / Sign up
-- 🏠 Ana sayfa (Drop listesi)
-- 👑 Admin Paneli
-- 🛡️ Süper Admin Paneli
-- ⚙️ Ayarlar sayfası
-- 💬 AI Chatbot widget (sağ altta)
-- 📱 Responsive tasarım
+- Modern ve kullanıcı dostu UI
+- Sign in / Sign up
+- Ana sayfa (Drop listesi)
+- Admin Paneli
+- Süper Admin Paneli
+- Ayarlar sayfası
+- AI Chatbot widget (sağ altta)
+- Responsive tasarım
 
 ## Teknolojiler
 
