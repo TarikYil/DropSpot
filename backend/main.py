@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
 from database import engine, Base, get_db
-from routers import drops, waitlist, claim, admin
+from routers import drops, waitlist, claim, admin, superadmin
 import os
 
 # Veritabanı tablolarını oluştur
@@ -32,6 +32,7 @@ app.include_router(drops.router, prefix="/api/drops", tags=["Drops"])
 app.include_router(waitlist.router, prefix="/api/waitlist", tags=["Waitlist"])
 app.include_router(claim.router, prefix="/api/claims", tags=["Claims"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(superadmin.router, prefix="/api/superadmin", tags=["Super Admin"])
 
 
 @app.get("/")

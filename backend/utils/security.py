@@ -22,9 +22,16 @@ def decode_token(token: str) -> dict:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError as e:
+        error_msg = str(e)
+        print(f"JWT Decode Error: {error_msg}")
+        # Token süresi dolmuş mu kontrol et
+        if "expired" in error_msg.lower() or "exp" in error_msg.lower():
+            detail = "Token süresi dolmuş. Lütfen tekrar giriş yapın."
+        else:
+            detail = f"Token geçersiz: {error_msg}"
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token geçersiz veya süresi dolmuş",
+            detail=detail,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -41,14 +48,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    if not token:
+        print("Token bulunamadı!")
+        raise credentials_exception
+    
     try:
         payload = decode_token(token)
-        user_id: int = payload.get("sub")
+        user_id_str = payload.get("sub")
         username: str = payload.get("username")
         is_superuser: bool = payload.get("is_superuser", False)
-        token_type: str = payload.get("type")
+        token_type: str = payload.get("type", "access")  # Default olarak "access" kabul et
         
-        if user_id is None or token_type != "access":
+        if user_id_str is None:
+            print(f"Token'da user_id bulunamadı. Payload: {payload}")
+            raise credentials_exception
+        
+        # sub string olarak geldiği için integer'a çevir
+        try:
+            user_id: int = int(user_id_str)
+        except (ValueError, TypeError):
+            print(f"Geçersiz user_id formatı: {user_id_str}")
             raise credentials_exception
         
         # Token'dan gelen bilgileri kullan
@@ -58,7 +77,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
             "is_superuser": is_superuser
         }
         
-    except JWTError:
+    except HTTPException as e:
+        print(f"HTTPException: {e.detail}")
+        raise
+    except Exception as e:
+        # JWT hatası veya diğer hatalar
+        print(f"Token decode hatası: {type(e).__name__}: {str(e)}")
         raise credentials_exception
 
 
