@@ -136,3 +136,114 @@ async def delete_role(
     
     return {"message": "Rol başarıyla silindi"}
 
+
+class RoleAssignRequest(BaseModel):
+    user_id: int
+    role_id: int
+
+
+@router.post("/assign")
+async def assign_role(
+    request: RoleAssignRequest,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Kullanıcıya rol ata (Superuser gerekli)"""
+    current_user = get_current_user(db, token)
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu işlem için yetkiniz yok"
+        )
+    
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kullanıcı bulunamadı"
+        )
+    
+    role = db.query(Role).filter(Role.id == request.role_id).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Rol bulunamadı"
+        )
+    
+    # Rol zaten atanmış mı kontrol et
+    if role in user.roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bu rol zaten kullanıcıya atanmış"
+        )
+    
+    user.roles.append(role)
+    db.commit()
+    
+    return {"message": f"'{role.display_name}' rolü kullanıcıya başarıyla atandı"}
+
+
+@router.post("/remove")
+async def remove_role(
+    request: RoleAssignRequest,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Kullanıcıdan rol kaldır (Superuser gerekli)"""
+    current_user = get_current_user(db, token)
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu işlem için yetkiniz yok"
+        )
+    
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kullanıcı bulunamadı"
+        )
+    
+    role = db.query(Role).filter(Role.id == request.role_id).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Rol bulunamadı"
+        )
+    
+    # Rol atanmış mı kontrol et
+    if role not in user.roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bu rol kullanıcıya atanmamış"
+        )
+    
+    user.roles.remove(role)
+    db.commit()
+    
+    return {"message": f"'{role.display_name}' rolü kullanıcıdan başarıyla kaldırıldı"}
+
+
+@router.get("/user/{user_id}", response_model=List[RoleResponse])
+async def get_user_roles(
+    user_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """Kullanıcının rollerini getir"""
+    current_user = get_current_user(db, token)
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu işlem için yetkiniz yok"
+        )
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kullanıcı bulunamadı"
+        )
+    
+    return user.roles
+

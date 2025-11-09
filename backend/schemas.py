@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from models import DropStatus, ClaimStatus
 
 
@@ -115,3 +115,58 @@ class StatsResponse(BaseModel):
     approved_claims: int
     total_users_on_waitlist: int
 
+
+# Super Admin Schemas
+class RoleResponse(BaseModel):
+    id: int
+    name: str
+    display_name: str
+    description: Optional[str] = None
+    can_create_drops: bool = False
+    can_edit_drops: bool = False
+    can_delete_drops: bool = False
+    can_approve_claims: bool = False
+    can_manage_users: bool = False
+    can_view_analytics: bool = False
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RoleListResponse(RoleResponse):
+    pass
+
+
+class UserRoleResponse(BaseModel):
+    id: int
+    name: str
+    display_name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserListResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    full_name: Optional[str] = None
+    is_active: bool
+    is_superuser: bool
+    is_verified: bool
+    created_at: Optional[datetime] = None
+    roles: Optional[List[UserRoleResponse]] = []
+
+    class Config:
+        from_attributes = True
+
+
+class UserDetailResponse(UserListResponse):
+    last_login: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class UserRoleAssignRequest(BaseModel):
+    role_id: int
